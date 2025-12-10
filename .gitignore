@@ -1,0 +1,38 @@
+# Build directories
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/*.cmake
+/*.make
+/*.ninja
+/*.vcxproj*
+/*.sln
+/*.user
+/*.opensdf
+/*.sdf
+/*.ipch
+/*.obj
+/*.o
+/*.exe
+/*.dll
+/*.pdb
+/*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Logs (if generated)
+*.log
+
+# Backup files
+*~
+*.bak
