@@ -3,6 +3,7 @@
 #include <fstream>
 #include <mutex>
 #include <string>
+#include <iostream>
 
 class ConsoleSink : public Sink {
 public:
