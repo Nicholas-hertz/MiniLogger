@@ -7,7 +7,9 @@
 class FileSink : public Sink {
 public:
     explicit FileSink(const std::string& filename);
-    explicit FileSink(const std::string& filename, const int maxFileSizeInMb);
+    explicit FileSink(const std::string& filename, 
+        int maxFileSizeInMb = 0,
+        bool appendDateTimeToFilename = false);
     ~FileSink() override;
 
     void write(const std::string& formattedMessage) override;
@@ -15,14 +17,14 @@ public:
 private:
     std::ofstream file_;
     std::mutex mutex_;
+    std::string filename_ {};
     bool rollFile_ { false };
     long long maxFileSize_ {};
     int fileCount_ {};
-    std::string filename_ {};
+    bool appendDateTimeToFilename_ { false };
 
-    long long getFileSize(const std::string& filename);
-    void openFile(const std::string& filename);
     void closeFile(); //uses currently open file
     void openFile(); //uses currently open file
     long long getFileSize(); //uses currently open file
+    std::string generateFileName() const;  // private helper
 };

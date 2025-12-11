@@ -3,17 +3,18 @@
 #include <stdexcept>
 
 FileSink::FileSink(const std::string& filename)
-    : maxFileSize_(0), fileCount_(0), filename_(filename)
+    :  filename_(filename), maxFileSize_(0), fileCount_(0), appendDateTimeToFilename_(false)
 {
-    openFile(filename_);
+    openFile();
 }
 
-FileSink::FileSink(const std::string& filename, const int maxFileSizeInMb)
-    : maxFileSize_(static_cast<long long>(maxFileSizeInMb) * 1024LL * 1024LL), 
-      fileCount_(0), 
-      filename_(filename)
+FileSink::FileSink(const std::string& filename, int maxFileSizeInMb, bool appendDateTimeToFilename)
+    : filename_(filename),
+      maxFileSize_(static_cast<long long>(maxFileSizeInMb) * 1024LL * 1024LL), 
+      fileCount_(0),
+      appendDateTimeToFilename_(appendDateTimeToFilename)
 {
-    openFile(filename_);
+    openFile();
 }
 
 FileSink::~FileSink() {
@@ -31,6 +32,7 @@ void FileSink::write(const std::string& formattedMessage) {
         long long currFileSize = getFileSize();
         if(currFileSize >= maxFileSize_) {
             closeFile();
+            fileCount_++;
             openFile(); // opens next rolling file
         }
     }
@@ -41,20 +43,17 @@ void FileSink::write(const std::string& formattedMessage) {
 
 long long FileSink::getFileSize() {
     try {
-        std::string fname = filename_;
-        if(fileCount_ > 0) {
-            fname = filename_ + "." + std::to_string(fileCount_);
-        }
-        return std::filesystem::file_size(fname);
+        return std::filesystem::file_size(generateFileName());
     } catch (const std::filesystem::filesystem_error&) {
         return 0;
     }
 }
 
-void FileSink::openFile(const std::string& filename) {
-    file_.open(filename, std::ios::app);
+void FileSink::openFile() {
+    auto newFileName = generateFileName();
+    file_.open(newFileName, std::ios::app);
     if(!file_.is_open()) {
-        throw std::runtime_error("Failed to open log file: " + filename);
+        throw std::runtime_error("Failed to open log file: " + newFileName);
     }
 }
 
@@ -64,22 +63,22 @@ void FileSink::closeFile() {
     }
 }
 
-void FileSink::openFile() {
-    fileCount_++; // increment rolling count
-    std::string newFile = filename_;
-    if(fileCount_ > 0) {
-        newFile = filename_ + "." + std::to_string(fileCount_);
-    }
-    file_.open(newFile, std::ios::app);
-    if(!file_.is_open()) {
-        throw std::runtime_error("Failed to open log file: " + newFile);
-    }
-}
+std::string FileSink::generateFileName() const {
+    std::string filename {};
 
-long long FileSink::getFileSize(const std::string& filename) {
-    try {
-        return std::filesystem::file_size(filename);
-    } catch (const std::filesystem::filesystem_error&) {
-        return 0;
+    if(appendDateTimeToFilename_) {
+        auto nowTimeStamp = std::chrono::system_clock::now();
+        time_t time = std::chrono::system_clock::to_time_t(nowTimeStamp);
+        std::ostringstream oss;
+        oss << std::put_time(std::localtime(&time), "%Y-%m-%d");
+        filename += oss.str() + "_";
     }
+
+    filename += filename_;
+
+    if(fileCount_ > 0) {
+        filename += "." + std::to_string(fileCount_);
+    }
+
+    return filename;
 }
